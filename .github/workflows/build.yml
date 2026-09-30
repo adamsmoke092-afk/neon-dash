@@ -1,0 +1,57 @@
+name: Build Neon Dash APK
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+          cache: 'gradle'
+
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+
+      - name: Stage the game into www/
+        run: |
+          mkdir -p www
+          cp index.html www/index.html
+
+      - name: Add the Android platform
+        run: npx cap add android
+
+      - name: Apply native overrides (landscape lock, keep-screen-on, immersive)
+        run: |
+          mkdir -p android/app/src/main/java/com/neondash/game
+          cp android-src/MainActivity.java android/app/src/main/java/com/neondash/game/MainActivity.java
+
+      - name: Sync web assets and plugins into the native project
+        run: npx cap sync android
+
+      - name: Build debug APK
+        run: |
+          cd android
+          chmod +x gradlew
+          ./gradlew assembleDebug --no-daemon
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: neon-dash-apk
+          path: android/app/build/outputs/apk/debug/app-debug.apk
+          retention-days: 90
