@@ -42,6 +42,9 @@ jobs:
       - name: Sync web assets and plugins into the native project
         run: npx cap sync android
 
+      - name: Generate app icons from SVG (replaces default Capacitor icon)
+        run: node android-src/make-icons.js
+
       - name: Build debug APK
         run: |
           cd android
