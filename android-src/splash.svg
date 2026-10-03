@@ -1,0 +1,68 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="1920" viewBox="0 0 1080 1920">
+  <defs>
+    <linearGradient id="sky" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#150636"/>
+      <stop offset="45%" stop-color="#3d0d63"/>
+      <stop offset="78%" stop-color="#8b1a73"/>
+      <stop offset="100%" stop-color="#f2578c"/>
+    </linearGradient>
+    <radialGradient id="sunGlow" cx="68%" cy="28%" r="35%">
+      <stop offset="0%" stop-color="#ff3d9a" stop-opacity="0.6"/>
+      <stop offset="100%" stop-color="#ff3d9a" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="body" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#67e8f9"/>
+      <stop offset="55%" stop-color="#22d3ee"/>
+      <stop offset="100%" stop-color="#a855f7"/>
+    </linearGradient>
+    <linearGradient id="trail" x1="100%" y1="0%" x2="0%" y2="0%">
+      <stop offset="0%" stop-color="#22d3ee" stop-opacity="0.8"/>
+      <stop offset="100%" stop-color="#22d3ee" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Sky -->
+  <rect width="1080" height="1920" fill="url(#sky)"/>
+  <rect width="1080" height="1920" fill="url(#sunGlow)"/>
+
+  <!-- Perspective grid floor -->
+  <g stroke="rgba(0,229,255,0.25)" stroke-width="3" fill="none">
+    <line x1="0" y1="1450" x2="1080" y2="1450"/>
+    <line x1="0" y1="1550" x2="1080" y2="1550"/>
+    <line x1="0" y1="1680" x2="1080" y2="1680"/>
+    <line x1="0" y1="1850" x2="1080" y2="1850"/>
+  </g>
+  <g stroke="rgba(0,229,255,0.18)" stroke-width="2.5" fill="none">
+    <line x1="60" y1="1920" x2="480" y2="1450"/>
+    <line x1="240" y1="1920" x2="500" y2="1450"/>
+    <line x1="420" y1="1920" x2="520" y2="1450"/>
+    <line x1="660" y1="1920" x2="560" y2="1450"/>
+    <line x1="840" y1="1920" x2="600" y2="1450"/>
+    <line x1="1020" y1="1920" x2="620" y2="1450"/>
+  </g>
+  <line x1="0" y1="1450" x2="1080" y2="1450" stroke="#00e5ff" stroke-width="5" opacity="0.8"/>
+
+  <!-- Character: large, mid-run with speed trail -->
+  <g transform="rotate(-7, 540, 860)">
+    <rect x="380" y="400" width="150" height="60" rx="30" fill="url(#trail)"/>
+    <rect x="420" y="500" width="120" height="40" rx="20" fill="url(#trail)" opacity="0.35"/>
+
+    <rect x="500" y="280" width="180" height="270" rx="55" fill="url(#body)"/>
+    <rect x="540" y="340" width="120" height="55" rx="27" fill="#0b0320"/>
+    <rect x="555" y="355" width="55" height="22" rx="11" fill="#fde047"/>
+
+    <line x1="550" y1="540" x2="520" y2="620" stroke="#67e8f9" stroke-width="24" stroke-linecap="round"/>
+    <line x1="630" y1="540" x2="660" y2="600" stroke="#67e8f9" stroke-width="24" stroke-linecap="round"/>
+  </g>
+
+  <!-- Title -->
+  <text x="540" y="950" font-family="ui-sans-serif, system-ui, -apple-system, sans-serif"
+        font-size="120" font-weight="900" text-anchor="middle" fill="#22d3ee">NEON</text>
+  <text x="540" y="1080" font-family="ui-sans-serif, system-ui, -apple-system, sans-serif"
+        font-size="120" font-weight="900" text-anchor="middle" fill="#f472b6">DASH</text>
+
+  <!-- Orbs -->
+  <circle cx="780" cy="320" r="30" fill="#fde047" opacity="0.9"/>
+  <circle cx="300" cy="240" r="22" fill="#fde047" opacity="0.6"/>
+  <circle cx="860" cy="480" r="18" fill="#fde047" opacity="0.4"/>
+</svg>

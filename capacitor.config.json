@@ -1,5 +1,12 @@
 {
   "appId": "com.neondash.game",
   "appName": "Neon Dash",
-  "webDir": "www"
+  "webDir": "www",
+  "plugins": {
+    "SplashScreen": {
+      "launchShowDuration": 1200,
+      "backgroundColor": "#150636",
+      "androidSplashResourceName": "splash"
+    }
+  }
 }

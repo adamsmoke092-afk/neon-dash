@@ -68,7 +68,13 @@ async function main() {
   fs.writeFileSync(path.join(xmlDir, 'ic_launcher.xml'), xml);
   fs.writeFileSync(path.join(xmlDir, 'ic_launcher_round.xml'), xml);
 
-  console.log('Icons generated: legacy (5 densities) + adaptive (5 densities + XML)');
+  // Splash screen: 1080x1920 PNG in drawable, replaces Capacitor's white default
+  const splashSvg = fs.readFileSync('android-src/splash.svg');
+  const drawableDir = path.join(RES, 'drawable');
+  fs.mkdirSync(drawableDir, { recursive: true });
+  await sharp(splashSvg).png().toFile(path.join(drawableDir, 'splash.png'));
+
+  console.log('Icons generated: legacy (5 densities) + adaptive (5 densities + XML) + splash screen');
 }
 
 main().catch(err => { console.error(err); process.exit(1); });

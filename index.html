@@ -67,7 +67,7 @@
   var BOLT_LIFE = 1.2;
 
   var DIFFS = {
-    easy:   { label: 'EASY',   base: 320, max: 900,  accel: 4.4, gap: 1.20, pit: 0.34, score: 0.80, pup: 0.85, key: '1' },
+    easy:   { label: 'EASY',   base: 270, max: 760,  accel: 3.2, gap: 1.35, pit: 0.28, score: 0.80, pup: 0.85, key: '1' },
     normal: { label: 'NORMAL', base: 360, max: 1080, accel: 6.2, gap: 1.00, pit: 0.40, score: 1.00, pup: 1.00, key: '2' },
     hard:   { label: 'HARD',   base: 430, max: 1280, accel: 8.6, gap: 0.88, pit: 0.44, score: 1.35, pup: 1.20, key: '3' },
     daily:  { label: 'DAILY',  base: 360, max: 1080, accel: 6.2, gap: 1.00, pit: 0.40, score: 1.00, pup: 1.00, key: '4' }
@@ -741,8 +741,12 @@
     nextSpawn: 700, nextPup: 1500, nextBoss: 11000, milestone: 0,
     flashT: 0, flashTxt: '', shake: 0, hitFlash: 0,
     newBest: false, overT: 0, menuT: 0, pupMsg: '', pupMsgT: 0, cause: '',
-    seedTxt: '', pitsCleared: 0, stomps: 0, bossKills: 0, charge: 0
+    seedTxt: '', pitsCleared: 0, stomps: 0, bossKills: 0, charge: 0,
+    tut: 0, tutDone: false
   };
+
+  // tutorial shows on the very first run only
+  if (life.runs === 0 && !store.get('neondash.tutdone', 0)) game.tut = 1;
 
   var player = {
     y: GROUND_Y, prevY: GROUND_Y, vy: 0, h: RUN_H, w: 38,
@@ -774,7 +778,7 @@
     game.score = 0;
     game.nextSpawn = 900;
     game.nextPup = 2600;
-    game.nextBoss = modeId === 'daily' ? 9000 : 11000;
+    game.nextBoss = modeId === 'daily' ? 9000 : (modeId === 'easy' ? 20000 : 11000);
     game.milestone = 0;
     game.flashT = 0;
     game.shake = 0;
@@ -788,6 +792,7 @@
     game.bossKills = 0;
     game.charge = 0;
     game.best = readBest(modeId);
+    if (game.tut > 0 && !game.tutDone) game.tut = 1;
     srand = modeId === 'daily' ? mulberry32(dayStamp()) : null;
     game.seedTxt = modeId === 'daily' ? 'DAY ' + dayStamp() : '';
     boss = null;
@@ -1322,9 +1327,11 @@
     var r = rng();
     var kind;
 
-    if (game.worldX < 700) kind = 'block';
+    // Easy gets a long grace period: only simple blocks at first, no drones/pits
+    var grace = modeId === 'easy' ? 2400 : 700;
+    if (game.worldX < grace) kind = 'block';
     else if (r < 0.14 && h > 0.18) kind = 'pit';
-    else if (r < 0.26 && game.worldX > 3000) kind = 'plat';
+    else if (r < 0.26 && game.worldX > (modeId === 'easy' ? 6000 : 3000)) kind = 'plat';
     else if (r < 0.38 && h > 0.22) kind = 'combo';
     else if (r < 0.50 && h > 0.30) kind = 'stairs';
     else if (r < 0.68 && h > 0.12) kind = 'drone';
@@ -2023,8 +2030,8 @@
     return { x: W / 2 + dx, y: H / 2 + dy };
   }
 
-  var pad = { x: W - 190, y: H - 118, w: 160, h: 92 };
-  var firePad = { x: W - 352, y: H - 118, w: 150, h: 92 };
+  var pad = { x: W - 220, y: H - 148, w: 190, h: 124 };
+  var firePad = { x: W - 440, y: H - 148, w: 200, h: 124 };
   function inPad(p) { return p.x > pad.x && p.x < pad.x + pad.w && p.y > pad.y && p.y < pad.y + pad.h; }
   function inFire(p) { return p.x > firePad.x && p.x < firePad.x + firePad.w && p.y > firePad.y && p.y < firePad.y + firePad.h; }
   function inMute(p) { return p.x > W - 104 && p.x < W - 60 && p.y > 8 && p.y < 60; }
@@ -2048,6 +2055,13 @@
       if ((state === 'play' || state === 'pause') && inPad(p)) {
         if (state === 'play') { setSlide(true); player.slideHold = true; }
         else state = 'menu';
+        continue;
+      }
+      // dead zone between the two pads — a thumb landing in the gap does
+      // nothing rather than triggering a phantom jump
+      if (state === 'play' &&
+          p.y > pad.y - 16 && p.y < pad.y + pad.h + 16 &&
+          p.x > firePad.x && p.x < pad.x + pad.w) {
         continue;
       }
       if (state === 'over') {
@@ -2398,6 +2412,56 @@
     drawFxHud();
     drawTopButtons();
     drawModeTag();
+    drawTutorial();
+  }
+
+  // First-run tutorial: three prompts that disappear once the player acts.
+  // Stage 1: JUMP, 2: HOLD FOR HEIGHT, 3: SLIDE — then it's gone forever.
+  function drawTutorial() {
+    if (!game.tut || game.tut > 3) return;
+    var msgs = [
+      '',
+      isTouch ? 'TAP TO JUMP' : 'PRESS SPACE TO JUMP',
+      isTouch ? 'HOLD TAP = HIGHER JUMP' : 'HOLD SPACE = HIGHER JUMP',
+      isTouch ? 'HOLD SLIDE PAD TO DUCK' : 'PRESS DOWN TO SLIDE'
+    ];
+    var txt = msgs[game.tut];
+    if (!txt) return;
+
+    var a = 0.7 + 0.3 * Math.sin(game.time * 5);
+    ctx.globalAlpha = a;
+
+    // position above the first obstacle so it's contextual
+    var tx = W / 2, ty = 220;
+
+    // backing pill so it reads against any background
+    ctx.fillStyle = TH.panel;
+    var w = 260, h = 40;
+    rrect(tx - w / 2, ty - h / 2, w, h, 20);
+    ctx.fill();
+    ctx.strokeStyle = TH.accent;
+    ctx.lineWidth = 2;
+    rrect(tx - w / 2, ty - h / 2, w, h, 20);
+    ctx.stroke();
+
+    glowText(txt, tx, ty, 20, TH.accent, 'center', 800);
+    ctx.globalAlpha = 1;
+  }
+
+  // advance the tutorial when the player performs the taught action
+  function tickTutorial() {
+    if (!game.tut || game.tut > 3) return;
+    if (game.tut === 1 && !player.onGround) {
+      game.tut = 2;
+    } else if (game.tut === 2 && player.y < GROUND_Y - 120) {
+      game.tut = 3;
+    } else if (game.tut === 3 && player.sliding) {
+      game.tut = 0;
+      game.tutDone = true;
+      store.set('neondash.tutdone', 1);
+      game.flashT = 1.2;
+      game.flashTxt = 'YOU\u2019RE READY';
+    }
   }
 
   function setMode(m) {
@@ -2485,24 +2549,36 @@
     if (!isTouch) return;
     var canF = canFire();
     ctx.save();
+
+    // FIRE pad: 200x124 — sized for a thumb, not a fingertip
     if (canF) {
-      var pulse = game.charge >= CHARGE_MAX ? 0.55 + 0.25 * Math.sin(game.time * 8) : 0.4;
+      var full = game.charge >= CHARGE_MAX;
+      var pulse = full ? 0.55 + 0.25 * Math.sin(game.time * 8) : 0.4;
       ctx.globalAlpha = pulse;
-      ctx.strokeStyle = game.charge >= CHARGE_MAX ? TH.gold : TH.accent;
-      ctx.lineWidth = 2.4;
-      rrect(firePad.x, firePad.y, firePad.w, firePad.h, 16);
+      ctx.strokeStyle = full ? TH.gold : TH.accent;
+      ctx.lineWidth = 3;
+      rrect(firePad.x, firePad.y, firePad.w, firePad.h, 20);
       ctx.stroke();
+      if (full) {
+        ctx.globalAlpha = 0.15;
+        ctx.fillStyle = TH.gold;
+        rrect(firePad.x, firePad.y, firePad.w, firePad.h, 20);
+        ctx.fill();
+      }
       ctx.globalAlpha = 0.9;
-      glowText('FIRE', firePad.x + firePad.w / 2, firePad.y + firePad.h / 2, 22,
-               game.charge >= CHARGE_MAX ? TH.gold : TH.accent, 'center', 800);
+      glowText('FIRE', firePad.x + firePad.w / 2, firePad.y + firePad.h / 2, 28,
+               full ? TH.gold : TH.accent, 'center', 800);
     }
-    ctx.globalAlpha = state === 'play' ? 0.3 : 0.14;
+
+    // SLIDE pad: 190x124 — matched height, clear gap between them
+    ctx.globalAlpha = state === 'play' ? 0.35 : 0.14;
     ctx.strokeStyle = TH.accent;
-    ctx.lineWidth = 2;
-    rrect(pad.x, pad.y, pad.w, pad.h, 16);
+    ctx.lineWidth = 3;
+    rrect(pad.x, pad.y, pad.w, pad.h, 20);
     ctx.stroke();
     ctx.globalAlpha = state === 'play' ? 0.8 : 0.35;
-    glowText('SLIDE', pad.x + pad.w / 2, pad.y + pad.h / 2, 22, TH.accent, 'center', 800);
+    glowText('SLIDE', pad.x + pad.w / 2, pad.y + pad.h / 2, 28, TH.accent, 'center', 800);
+
     ctx.globalAlpha = state === 'play' ? 0.5 : 0.25;
     glowText('TAP TO JUMP', 26, pad.y + pad.h / 2, 15, TH.dim, 'left', 700, TH.accent);
     ctx.restore();
@@ -2769,6 +2845,7 @@
       updateWorld(dt);
       updatePlayer(dt);
       if (!player.dead) checkCollisions(dt);
+      if (!player.dead) tickTutorial();
     } else if (state === 'menu') {
       game.menuT += dt;
       game.time += dt;
